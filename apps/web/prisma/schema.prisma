@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  ENGINEER
+  OPERATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CompressorStatus {
+  ON
+  OFF
+}
+
+enum TelemetrySource {
+  PRESSURE_HEADER
+  PRESSURE_LIQ_01
+  POWER
+  PRICE
+  LIQUIFIER_FLOW
+  LIQUIFIER_TEMP
+  LIQUIFIER_PRESSURE
+}
+
+enum AlertSeverity {
+  INFO
+  WARN
+  DANGER
+}
+
+enum SimulationStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ─── Models ─────────────────────────────────────────────────────────
+
+model User {
+  id          String     @id @default(cuid())
+  email       String     @unique
+  name        String
+  azureAdId   String?    @unique
+  role        UserRole   @default(OPERATOR)
+  status      UserStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  lastLoginAt DateTime?
+
+  // Relations
+  compressorUpdates Compressor[]    @relation("CompressorUpdatedBy")
+  acknowledgedAlerts Alert[]        @relation("AlertAcknowledgedBy")
+  auditLogs         AuditLog[]
+  simulationRuns    SimulationRun[]
+
+  @@map("users")
+}
+
+model Site {
+  id       String @id @default(cuid())
+  name     String
+  timezone String @default("UTC")
+  location String?
+
+  // Relations
+  compressors      Compressor[]
+  telemetryReadings TelemetryReading[]
+  demandForecasts  DemandForecast[]
+
+  @@map("sites")
+}
+
+model Compressor {
+  id             String           @id @default(cuid())
+  portNumber     Int
+  siteId         String?
+  maxFlow        Decimal          @db.Decimal(10, 4)
+  minFlow        Decimal          @db.Decimal(10, 4)
+  startupPenalty Decimal          @db.Decimal(10, 4)
+  runningStatus  CompressorStatus @default(OFF)
+  priceFactor    Decimal          @db.Decimal(10, 4)
+  minTakePerDay  Decimal          @db.Decimal(10, 4)
+  availability   Decimal          @db.Decimal(5, 2) @default(100.00)
+  updatedAt      DateTime         @updatedAt
+  updatedById    String?
+
+  // Relations
+  site      Site? @relation(fields: [siteId], references: [id])
+  updatedBy User? @relation("CompressorUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([portNumber, siteId])
+  @@map("compressors")
+}
+
+model TelemetryReading {
+  id        String          @id @default(cuid())
+  source    TelemetrySource
+  siteId    String?
+  timestamp DateTime
+  value     Decimal         @db.Decimal(18, 6)
+  unit      String
+
+  // Relations
+  site Site? @relation(fields: [siteId], references: [id])
+
+  @@index([source, timestamp])
+  @@index([siteId, source, timestamp])
+  @@map("telemetry_readings")
+}
+
+model DemandForecast {
+  id              String   @id @default(cuid())
+  siteId          String?
+  timestamp       DateTime
+  existingDemand  Decimal  @db.Decimal(18, 6)
+  predictedDemand Decimal  @db.Decimal(18, 6)
+  modelVersion    String   @default("v1.0-mock")
+
+  // Relations
+  site Site? @relation(fields: [siteId], references: [id])
+
+  @@index([siteId, timestamp])
+  @@map("demand_forecasts")
+}
+
+model Alert {
+  id             String        @id @default(cuid())
+  severity       AlertSeverity
+  message        String
+  source         String
+  createdAt      DateTime      @default(now())
+  acknowledgedAt DateTime?
+  acknowledgedById String?
+
+  // Relations
+  acknowledgedBy User? @relation("AlertAcknowledgedBy", fields: [acknowledgedById], references: [id])
+
+  @@index([severity, createdAt])
+  @@map("alerts")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String
+  action       String
+  resourceType String
+  resourceId   String?
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([resourceType, createdAt])
+  @@map("audit_logs")
+}
+
+model SimulationRun {
+  id            String           @id @default(cuid())
+  startTime     DateTime         @default(now())
+  horizon       Int              @default(24) // hours
+  status        SimulationStatus @default(PENDING)
+  createdById   String
+  inputSnapshot Json             @default("{}")
+  results       Json             @default("{}")
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@map("simulation_runs")
+}

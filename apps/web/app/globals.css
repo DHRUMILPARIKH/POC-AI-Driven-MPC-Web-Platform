@@ -1,0 +1,119 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Light theme — warm grey base, deep cyan accent */
+  :root {
+    --background: 40 10% 96%;
+    --foreground: 210 20% 12%;
+
+    --card: 40 10% 98%;
+    --card-foreground: 210 20% 12%;
+
+    --popover: 40 10% 98%;
+    --popover-foreground: 210 20% 12%;
+
+    --primary: 180 70% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 15% 90%;
+    --secondary-foreground: 210 20% 12%;
+
+    --muted: 210 10% 92%;
+    --muted-foreground: 210 10% 40%;
+
+    --accent: 180 60% 25%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 63% 32%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
+
+    --danger: 0 72% 45%;
+    --danger-foreground: 0 0% 100%;
+
+    --border: 210 15% 85%;
+    --input: 210 15% 85%;
+    --ring: 180 70% 30%;
+
+    --radius: 0.375rem;
+  }
+
+  /* Dark theme — near-black base, teal/cyan accent */
+  .dark {
+    --background: 210 20% 7%;
+    --foreground: 180 10% 90%;
+
+    --card: 210 18% 10%;
+    --card-foreground: 180 10% 90%;
+
+    --popover: 210 18% 10%;
+    --popover-foreground: 180 10% 90%;
+
+    --primary: 180 65% 50%;
+    --primary-foreground: 210 20% 7%;
+
+    --secondary: 210 15% 16%;
+    --secondary-foreground: 180 10% 85%;
+
+    --muted: 210 15% 14%;
+    --muted-foreground: 210 10% 55%;
+
+    --accent: 180 65% 50%;
+    --accent-foreground: 210 20% 7%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 63% 42%;
+    --success-foreground: 210 20% 7%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 20% 7%;
+
+    --danger: 0 62% 50%;
+    --danger-foreground: 0 0% 100%;
+
+    --border: 210 15% 18%;
+    --input: 210 15% 18%;
+    --ring: 180 65% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* Industrial monospace for data/numerics */
+  .font-data {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+  }
+}
+
+/* Smooth theme transition — no FOUC */
+html {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* Scrollbar styling for industrial look */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+}
